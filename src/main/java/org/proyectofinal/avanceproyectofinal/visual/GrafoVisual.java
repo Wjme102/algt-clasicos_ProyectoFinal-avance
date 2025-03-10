@@ -102,4 +102,112 @@ public class GrafoVisual extends Application {
         dibujar();
     }
 
+    // Actualiza la posición del mouse y controla el placeholder
+    private void onMouseMoved(MouseEvent event) {
+    mouseX = event.getX();
+    mouseY = event.getY();
+    boolean sobreParada = (obtenerParadaCercaDe(mouseX, mouseY) != null);
+    boolean sobreRuta = false;
+    for (List<Ruta> list : grafoLogico.getAdjList().values()) {
+        for (Ruta r : list) {
+            double d = distancePointToSegment(mouseX, mouseY,
+                    r.getOrigen().getX(), r.getOrigen().getY(),
+                    r.getDestino().getX(), r.getDestino().getY());
+            if (d < 7) {
+                sobreRuta = true;
+                break;
+            }
+        }
+        if (sobreRuta) break;
+    }
+    mostrarPlaceholder = !(sobreParada || sobreRuta);
+    dibujar();
+    }
+
+    
+    // Actualiza el placeholder al entrar el mouse según si está sobre una parada o ruta
+    private void onMouseEntered(MouseEvent event) {
+        if (obtenerParadaCercaDe(event.getX(), event.getY()) == null) {
+            boolean sobreRuta = false;
+            for (List<Ruta> list : grafoLogico.getAdjList().values()) {
+                for (Ruta r : list) {
+                    double d = distancePointToSegment(event.getX(), event.getY(),
+                            r.getOrigen().getX(), r.getOrigen().getY(),
+                            r.getDestino().getX(), r.getDestino().getY());
+                    if (d < 7) {
+                        sobreRuta = true;
+                        break;
+                    }
+                }
+                if (sobreRuta) break;
+            }
+            mostrarPlaceholder = !sobreRuta;
+        }
+        dibujar();
+    }
+
+    // Oculta el placeholder al salir el mouse
+    private void onMouseExited(MouseEvent event) {
+        mostrarPlaceholder = false;
+        dibujar();
+    }
+
+    // Selecciona la parada para arrastrar o editar al presionar el mouse
+    private void onMousePressed(MouseEvent event) {
+        Parada p = obtenerParadaCercaDe(event.getX(), event.getY());
+        if (p != null) {
+            paradaArrastrada = p;
+            paradaPresionada = p;
+            offsetX = event.getX() - p.getX();
+            offsetY = event.getY() - p.getY();
+            dragging = false;
+        } else {
+            paradaArrastrada = null;
+        }
+        dibujar();
+    }
+
+    // Mueve la parada mientras se arrastra el mouse
+    private void onMouseDragged(MouseEvent event) {
+        if (paradaArrastrada != null) {
+            paradaArrastrada.setX(event.getX() - offsetX);
+            paradaArrastrada.setY(event.getY() - offsetY);
+            dragging = true;
+            dibujar();
+        }
+    }
+
+    // Al soltar el mouse, edita la parada o ruta seleccionada, o crea una nueva parada
+    private void onMouseReleased(MouseEvent event) {
+        if (paradaArrastrada != null) {
+            if (!dragging) {
+                mostrarDialogoEdicion(paradaArrastrada, primaryStage);
+            }
+            paradaArrastrada = null;
+            paradaPresionada = null;
+            dragging = false;
+        } else {
+            Ruta rutaClickeada = null;
+            for (List<Ruta> list : grafoLogico.getAdjList().values()) {
+                for (Ruta r : list) {
+                    double d = distancePointToSegment(mouseX, mouseY,
+                            r.getOrigen().getX(), r.getOrigen().getY(),
+                            r.getDestino().getX(), r.getDestino().getY());
+                    if (d < 5) {
+                        rutaClickeada = r;
+                        break;
+                    }
+                }
+                if (rutaClickeada != null) break;
+            }
+            if (rutaClickeada != null) {
+                mostrarDialogoEdicionRuta(rutaClickeada, primaryStage);
+            } else {
+                Parada nueva = new Parada(mouseX, mouseY, "");
+                grafoLogico.agregarParada(nueva);
+            }
+            dibujar();
+        }
+    }
+
 }
