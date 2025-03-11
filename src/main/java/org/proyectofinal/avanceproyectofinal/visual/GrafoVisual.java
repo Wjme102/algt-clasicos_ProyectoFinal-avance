@@ -511,8 +511,86 @@ public class GrafoVisual extends Application {
         dialog.showAndWait();
     }
 
-
-
+    private void showDijkstraDialog() {
+        Stage dialog = new Stage();
+        dialog.initOwner(primaryStage);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Ruta más corta");
     
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(10));
+        vbox.setStyle("-fx-background-color: #1A1A2E;");
+    
+        Label lblInicio = new Label("Parada de inicio:");
+        lblInicio.setTextFill(Color.WHITE);
+        ComboBox<Parada> cbInicio = new ComboBox<>();
+        cbInicio.getItems().addAll(grafoLogico.getParadas());
+    
+        Label lblDestino = new Label("Parada de destino:");
+        lblDestino.setTextFill(Color.WHITE);
+        ComboBox<Parada> cbDestino = new ComboBox<>();
+        cbDestino.getItems().addAll(grafoLogico.getParadas());
+    
+        Label lblCriterio = new Label("Criterio:");
+        lblCriterio.setTextFill(Color.WHITE);
+        ComboBox<String> cbCriterio = new ComboBox<>();
+        cbCriterio.getItems().addAll("tiempo", "distancia", "costo");
+        cbCriterio.setValue("tiempo");
+    
+        Button btnCalcular = new Button("Calcular");
+        btnCalcular.setStyle("-fx-background-color: #444444; -fx-text-fill: white;");
+        btnCalcular.setOnAction(e -> {
+            Parada inicio = cbInicio.getValue();
+            Parada destino = cbDestino.getValue();
+            String criterio = cbCriterio.getValue();
+            if (inicio == null || destino == null) {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Seleccione ambas paradas.");
+                alert.showAndWait();
+            } else {
+                List<Parada> path = grafoLogico.dijkstra(inicio, destino, criterio);
+                if (path == null || path.isEmpty()) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "No se encontró ruta.");
+                    alert.showAndWait();
+                } else {
+                    dialog.close();
+                    animatePath(path);
+                }
+            }
+        });
+    
+        vbox.getChildren().addAll(lblInicio, cbInicio, lblDestino, cbDestino, lblCriterio, cbCriterio, btnCalcular);
+    
+        Scene scene = new Scene(vbox, 300, 300);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+    
+    private void animatePath(List<Parada> path) {
+        animatedPath = path;
+        currentStep = 0;
+        animating = true;
+        Timeline timeline = new Timeline();
+        timeline.setCycleCount(path.size());
+        timeline.getKeyFrames().add(new KeyFrame(Duration.seconds(2), event -> {
+            currentStep++;
+            dibujar();
+        }));
+        timeline.setOnFinished(e -> {
+            animating = false;
+            Platform.runLater(() -> {
+                StringBuilder sb = new StringBuilder();
+                for (Parada p : path) {
+                    sb.append(p.toString()).append(" -> ");
+                }
+                sb.setLength(sb.length() - 4);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Ruta recorrida: " + sb.toString());
+                alert.showAndWait();
+                animatedPath = null;
+                dibujar();
+            });
+        });
+        timeline.play();
+    }
+
 
 }
