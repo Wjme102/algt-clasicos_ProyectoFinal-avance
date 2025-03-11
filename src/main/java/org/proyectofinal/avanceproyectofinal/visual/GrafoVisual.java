@@ -336,6 +336,37 @@ public class GrafoVisual extends Application {
         return Math.hypot(px - projX, py - projY);
     }
 
+
+    private void updateInfoBox() {
+        infoBox.getChildren().clear();
+        for (Parada p : grafoLogico.getParadas()) {
+            int connCount = grafoLogico.getConnectionCount(p);
+            String info = "Nombre: " + (p.getNombre().isEmpty() ? "(sin nombre)" : p.getNombre())
+                    + "\nPosición: (" + (int) p.getX() + ", " + (int) p.getY() + ")"
+                    + "\nRutas: " + connCount;
+            Label infoLabel = new Label(info);
+            infoLabel.setTextFill(Color.WHITE);
+            infoLabel.setStyle("-fx-background-color: rgba(0,0,0,0.3);");
+            infoLabel.setPadding(new Insets(3));
+            infoBox.getChildren().add(infoLabel);
+        }
+    
+        Button btnRuta = new Button("Calcular ruta");
+        btnRuta.setStyle("-fx-background-color: #444444; -fx-text-fill: white;");
+        btnRuta.setOnAction(e -> showDijkstraDialog());
+        infoBox.getChildren().add(btnRuta);
+    }
+    
+    private Parada obtenerParadaCercaDe(double x, double y) {
+        for (Parada p : grafoLogico.getParadas()) {
+            if (Math.hypot(p.getX() - x, p.getY() - y) <= RADIO) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+
     
 
 }
