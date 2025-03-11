@@ -210,4 +210,132 @@ public class GrafoVisual extends Application {
         }
     }
 
+
+    private void dibujar() {
+        gc.setFill(Color.web("#1A1A2E"));
+        gc.fillRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+    
+        // Dibujar rutas
+        for (Map.Entry<Parada, List<Ruta>> entry : grafoLogico.getAdjList().entrySet()) {
+            for (Ruta r : entry.getValue()) {
+                double x1 = r.getOrigen().getX();
+                double y1 = r.getOrigen().getY();
+                double x2 = r.getDestino().getX();
+                double y2 = r.getDestino().getY();
+    
+                double d = distancePointToSegment(mouseX, mouseY, x1, y1, x2, y2);
+                boolean hovered = d < 7;
+                if (hovered) {
+                    gc.setStroke(Color.LIGHTBLUE);
+                    gc.setLineWidth(4);
+                } else {
+                    gc.setStroke(Color.WHITE);
+                    gc.setLineWidth(2);
+                }
+                gc.strokeLine(x1, y1, x2, y2);
+                drawArrow(x1, y1, x2, y2);
+    
+                String label = String.format("T: %.0fm\nD: %.0fM\nC: $%.0f", r.getTiempo(), r.getDistancia(), r.getCosto());
+                String[] lines = label.split("\n");
+                double midX = (x1 + x2) / 2;
+                double midY = (y1 + y2) / 2;
+                Font routeFont = Font.font("Arial", FontWeight.NORMAL, 14);
+                gc.setFont(routeFont);
+                gc.setFill(Color.YELLOW);
+                double lineHeight = 14;
+                double totalHeight = lines.length * lineHeight;
+                for (int i = 0; i < lines.length; i++) {
+                    Text text = new Text(lines[i]);
+                    text.setFont(routeFont);
+                    double tw = text.getLayoutBounds().getWidth();
+                    gc.fillText(lines[i], midX - tw / 2, midY - totalHeight / 2 + i * lineHeight);
+                }
+            }
+        }
+
+        // Dibujar paradas
+        for (Parada p : grafoLogico.getParadas()) {
+            gc.setFill(Color.web("#FF7F7F"));
+            gc.fillOval(p.getX() - RADIO, p.getY() - RADIO, RADIO * 2, RADIO * 2);
+            if (!p.getNombre().isEmpty()) {
+                Font boldFont = Font.font("Arial", FontWeight.BOLD, 16);
+                gc.setFont(boldFont);
+                gc.setFill(Color.WHITE);
+                Text text = new Text(p.getNombre());
+                text.setFont(boldFont);
+                double textWidth = text.getLayoutBounds().getWidth();
+                double textHeight = text.getLayoutBounds().getHeight();
+                gc.fillText(p.getNombre(), p.getX() - textWidth / 2, p.getY() + textHeight / 4);
+                gc.setFont(Font.font("Arial", 12));
+            }
+            boolean hovered = Math.hypot(p.getX() - mouseX, p.getY() - mouseY) <= RADIO;
+            if (hovered) {
+                gc.setLineWidth(2);
+                gc.setStroke((p == paradaPresionada) ? Color.DARKGRAY : Color.WHITE);
+                gc.strokeOval(p.getX() - RADIO, p.getY() - RADIO, RADIO * 2, RADIO * 2);
+            }
+        }
+
+        if (mostrarPlaceholder) {
+            gc.setStroke(Color.WHITE);
+            gc.setLineWidth(1);
+            gc.setLineDashes(5);
+            gc.strokeOval(mouseX - RADIO, mouseY - RADIO, RADIO * 2, RADIO * 2);
+            gc.setLineDashes(0);
+        }
+
+        if (animating && animatedPath != null) {
+            for (int i = 0; i < currentStep && i < animatedPath.size() - 1; i++) {
+                Parada pa = animatedPath.get(i);
+                Parada pb = animatedPath.get(i + 1);
+                gc.setStroke(Color.ORANGE);
+                gc.setLineWidth(6);
+                gc.strokeLine(pa.getX(), pa.getY(), pb.getX(), pb.getY());
+            }
+            for (int i = 0; i <= currentStep && i < animatedPath.size(); i++) {
+                Parada p = animatedPath.get(i);
+                gc.setFill(Color.LIGHTGREEN);
+                gc.fillOval(p.getX() - RADIO, p.getY() - RADIO, RADIO * 2, RADIO * 2);
+                Font boldFont = Font.font("Arial", FontWeight.BOLD, 16);
+                gc.setFont(boldFont);
+                gc.setFill(Color.BLACK);
+                Text text = new Text(p.getNombre());
+                text.setFont(boldFont);
+                double tw = text.getLayoutBounds().getWidth();
+                double th = text.getLayoutBounds().getHeight();
+                gc.fillText(p.getNombre(), p.getX() - tw / 2, p.getY() + th / 4);
+                gc.setFont(Font.font("Arial", 12));
+            }
+        }
+
+        updateInfoBox();
+    }
+    
+    private void drawArrow(double x1, double y1, double x2, double y2) {
+        double angle = Math.atan2(y2 - y1, x2 - x1);
+        double arrowLength = 10;
+        double arrowAngle = Math.toRadians(20);
+        double xArrow1 = x2 - arrowLength * Math.cos(angle - arrowAngle);
+        double yArrow1 = y2 - arrowLength * Math.sin(angle - arrowAngle);
+        double xArrow2 = x2 - arrowLength * Math.cos(angle + arrowAngle);
+        double yArrow2 = y2 - arrowLength * Math.sin(angle + arrowAngle);
+        gc.strokeLine(x2, y2, xArrow1, yArrow1);
+        gc.strokeLine(x2, y2, xArrow2, yArrow2);
+    }
+    
+    private double distancePointToSegment(double px, double py, double x1, double y1, double x2, double y2) {
+        double dx = x2 - x1;
+        double dy = y2 - y1;
+        if (dx == 0 && dy == 0) {
+            return Math.hypot(px - x1, py - y1);
+        }
+        double t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+        t = Math.max(0, Math.min(1, t));
+        double projX = x1 + t * dx;
+        double projY = y1 + t * dy;
+        return Math.hypot(px - projX, py - projY);
+    }
+
+    
+
 }
