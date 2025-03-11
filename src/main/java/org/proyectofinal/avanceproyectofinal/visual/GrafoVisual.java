@@ -366,6 +366,152 @@ public class GrafoVisual extends Application {
         return null;
     }
 
+    private void mostrarDialogoEdicion(Parada p, Stage owner) {
+        Stage dialog = new Stage();
+        dialog.initOwner(owner);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Editar Parada");
+    
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(10));
+        vbox.setStyle("-fx-background-color: #1A1A2E;");
+    
+        Label labelNombre = new Label("Nombre de la Parada:");
+        labelNombre.setTextFill(Color.WHITE);
+        TextField tfNombre = new TextField(p.getNombre());
+        tfNombre.setStyle("-fx-background-color: #333333; -fx-text-fill: white;");
+    
+        Label labelConexiones = new Label("Conectar a:");
+        labelConexiones.setTextFill(Color.WHITE);
+        ListView<Parada> lvConexiones = new ListView<>();
+        for (Parada other : grafoLogico.getParadas()) {
+            if (!other.equals(p)) {
+                lvConexiones.getItems().add(other);
+            }
+        }
+        lvConexiones.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        List<Ruta> conexiones = grafoLogico.getAdjList().get(p);
+        if (conexiones != null) {
+            for (Parada other : lvConexiones.getItems()) {
+                for (Ruta r : conexiones) {
+                    if (r.getDestino().equals(other)) {
+                        lvConexiones.getSelectionModel().select(other);
+                        break;
+                    }
+                }
+            }
+        }
+        lvConexiones.setStyle("-fx-control-inner-background: #333333; -fx-text-fill: white;");
+    
+        Button btnEliminar = new Button("Eliminar parada");
+        btnEliminar.setStyle("-fx-background-color: #444444; -fx-text-fill: white;");
+        btnEliminar.setOnAction(e -> {
+            grafoLogico.eliminarParada(p);
+            dialog.close();
+            dibujar();
+        });
+    
+        Button btnAceptar = new Button("Aceptar");
+        btnAceptar.setStyle("-fx-background-color: #444444; -fx-text-fill: white;");
+        btnAceptar.setOnAction(e -> {
+            p.setNombre(tfNombre.getText());
+            grafoLogico.getAdjList().remove(p);
+            for (Parada destino : lvConexiones.getSelectionModel().getSelectedItems()) {
+                grafoLogico.addRoute(p, destino, 1.0, 1.0, 1.0);
+                grafoLogico.addRoute(destino, p, 1.0, 1.0, 1.0);
+            }
+            dialog.close();
+            dibujar();
+        });
+    
+        HBox hboxBtns = new HBox(10);
+        hboxBtns.setAlignment(Pos.CENTER);
+        hboxBtns.getChildren().addAll(btnEliminar, btnAceptar);
+    
+        vbox.getChildren().addAll(labelNombre, tfNombre, labelConexiones, lvConexiones, hboxBtns);
+    
+        Scene scene = new Scene(vbox, 300, 400);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+    
+    private void mostrarDialogoEdicionRuta(Ruta ruta, Stage owner) {
+        Stage dialog = new Stage();
+        dialog.initOwner(owner);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Editar Ruta");
+    
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(10));
+        vbox.setStyle("-fx-background-color: #1A1A2E;");
+    
+        Label lblInfo = new Label("Editar atributos de la ruta:");
+        lblInfo.setTextFill(Color.WHITE);
+    
+        Label lblTiempo = new Label("Tiempo (m):");
+        lblTiempo.setTextFill(Color.WHITE);
+        TextField tfTiempo = new TextField(String.valueOf(ruta.getTiempo()));
+        tfTiempo.setStyle("-fx-background-color: #333333; -fx-text-fill: white;");
+    
+        Label lblDistancia = new Label("Distancia (M):");
+        lblDistancia.setTextFill(Color.WHITE);
+        TextField tfDistancia = new TextField(String.valueOf(ruta.getDistancia()));
+        tfDistancia.setStyle("-fx-background-color: #333333; -fx-text-fill: white;");
+    
+        Label lblCosto = new Label("Costo ($):");
+        lblCosto.setTextFill(Color.WHITE);
+        TextField tfCosto = new TextField(String.valueOf(ruta.getCosto()));
+        tfCosto.setStyle("-fx-background-color: #333333; -fx-text-fill: white;");
+    
+        Button btnEliminar = new Button("Eliminar ruta");
+        btnEliminar.setStyle("-fx-background-color: #444444; -fx-text-fill: white;");
+        btnEliminar.setOnAction(e -> {
+            grafoLogico.removeRoute(ruta.getOrigen(), ruta.getDestino());
+            grafoLogico.removeRoute(ruta.getDestino(), ruta.getOrigen());
+            dialog.close();
+            dibujar();
+        });
+    
+        Button btnAceptar = new Button("Aceptar");
+        btnAceptar.setStyle("-fx-background-color: #444444; -fx-text-fill: white;");
+        btnAceptar.setOnAction(e -> {
+            try {
+                double tiempo = Double.parseDouble(tfTiempo.getText());
+                double distancia = Double.parseDouble(tfDistancia.getText());
+                double costo = Double.parseDouble(tfCosto.getText());
+                ruta.tiempo = tiempo;
+                ruta.distancia = distancia;
+                ruta.costo = costo;
+                List<Ruta> inversa = grafoLogico.getAdjList().get(ruta.getDestino());
+                if (inversa != null) {
+                    for (Ruta r : inversa) {
+                        if (r.getDestino().equals(ruta.getOrigen())) {
+                            r.tiempo = tiempo;
+                            r.distancia = distancia;
+                            r.costo = costo;
+                        }
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Ingrese valores numéricos válidos.");
+                alert.showAndWait();
+            }
+            dialog.close();
+            dibujar();
+        });
+    
+        HBox hbox = new HBox(10);
+        hbox.setAlignment(Pos.CENTER);
+        hbox.getChildren().addAll(btnEliminar, btnAceptar);
+    
+        vbox.getChildren().addAll(lblInfo, lblTiempo, tfTiempo, lblDistancia, tfDistancia, lblCosto, tfCosto, hbox);
+    
+        Scene scene = new Scene(vbox, 300, 300);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+
 
     
 
