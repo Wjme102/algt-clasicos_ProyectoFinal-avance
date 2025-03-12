@@ -77,6 +77,46 @@ public class GrafoVisual extends Application {
     
         movableInfoBox.getChildren().addAll(header, infoBox);
         root.getChildren().add(movableInfoBox);
+
+        // Se agrego el otro cuadro con informacion sobre las rutas
+        VBox movableInfoBoxRutas = new VBox();
+        movableInfoBoxRutas.setLayoutX(220); // Ubicación a la derecha del otro cuadro
+        movableInfoBoxRutas.setLayoutY(10);
+        movableInfoBoxRutas.setPrefWidth(200);
+        movableInfoBoxRutas.setAlignment(Pos.TOP_CENTER);
+
+        // Crear header del contenedor de rutas
+        Label headerRutas = new Label("Información sobre las rutas");
+        headerRutas.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        headerRutas.setTextFill(Color.WHITE);
+        headerRutas.setStyle("-fx-background-color: #333333; -fx-cursor: move; -fx-padding: 5;");
+        headerRutas.setAlignment(Pos.CENTER);
+        headerRutas.setMaxWidth(Double.MAX_VALUE);
+        headerRutas.setOnMousePressed(e -> {
+            infoBoxDragOffsetX = e.getSceneX() - movableInfoBoxRutas.getLayoutX();
+            infoBoxDragOffsetY = e.getSceneY() - movableInfoBoxRutas.getLayoutY();
+        });
+        headerRutas.setOnMouseDragged(e -> {
+            movableInfoBoxRutas.setLayoutX(e.getSceneX() - infoBoxDragOffsetX);
+            movableInfoBoxRutas.setLayoutY(e.getSceneY() - infoBoxDragOffsetY);
+        });
+
+        // Crear infoBox de rutas con mensaje
+        VBox infoBoxRutas = new VBox(5);
+        infoBoxRutas.setPadding(new Insets(10));
+        infoBoxRutas.setStyle("-fx-background-color: rgba(255,255,255,0.2);");
+        infoBoxRutas.setAlignment(Pos.TOP_LEFT);
+        infoBoxRutas.prefWidthProperty().bind(movableInfoBoxRutas.widthProperty());
+
+        Label mensajeRutas = new Label("Para cambiar atributos de una \nruta, haga clic sobre ella.");
+        mensajeRutas.setTextFill(Color.WHITE);
+        mensajeRutas.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+        infoBoxRutas.getChildren().add(mensajeRutas);
+
+        // Agregar header e infoBoxRutas a movableInfoBoxRutas
+        movableInfoBoxRutas.getChildren().addAll(headerRutas, infoBoxRutas);
+        root.getChildren().add(movableInfoBoxRutas);
+        
         root.setStyle("-fx-background-color: #1A1A2E;");
     
         gc = canvas.getGraphicsContext2D();
@@ -415,6 +455,13 @@ public class GrafoVisual extends Application {
         btnAceptar.setStyle("-fx-background-color: #444444; -fx-text-fill: white;");
         btnAceptar.setOnAction(e -> {
             p.setNombre(tfNombre.getText());
+            // Nombre de la parada no vacio
+            if(tfNombre.getText().isEmpty()){
+                Alert alert = new Alert(Alert.AlertType.ERROR, "El nombre de la parada no puede estar vacío.");
+                alert.showAndWait();
+            return;
+            }
+            
             grafoLogico.getAdjList().remove(p);
             for (Parada destino : lvConexiones.getSelectionModel().getSelectedItems()) {
                 grafoLogico.addRoute(p, destino, 1.0, 1.0, 1.0);
@@ -479,6 +526,14 @@ public class GrafoVisual extends Application {
                 double tiempo = Double.parseDouble(tfTiempo.getText());
                 double distancia = Double.parseDouble(tfDistancia.getText());
                 double costo = Double.parseDouble(tfCosto.getText());
+
+                 // VALIDACION ATRIBUTOS TIEMPO, DISTANCIA Y COSTO NO NEGATIVOS
+                if (tiempo <= 0 || distancia <= 0 || costo < 0) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Los valores deben ser positivos.");
+                    alert.showAndWait();
+                    return;
+                }
+                
                 ruta.tiempo = tiempo;
                 ruta.distancia = distancia;
                 ruta.costo = costo;
