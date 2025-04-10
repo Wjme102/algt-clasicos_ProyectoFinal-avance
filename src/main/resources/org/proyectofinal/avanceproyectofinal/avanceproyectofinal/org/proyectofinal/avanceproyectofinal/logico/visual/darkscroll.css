@@ -1,0 +1,54 @@
+.my-scroll-pane {
+    /* Fondo general del ScrollPane */
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-control-inner-background: #1A1A2E;
+    -fx-focus-color: #1A1A2E;
+    -fx-faint-focus-color: #1A1A2E;
+}
+
+/* Track vertical */
+.my-scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: #1A1A2E;
+}
+
+/* Thumb vertical */
+.my-scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #FF7F7F; /* color de la barrita */
+}
+
+/* Ocultar los botones verticales (flechas arriba/abajo) */
+.my-scroll-pane .scroll-bar:vertical .increment-button,
+.my-scroll-pane .scroll-bar:vertical .decrement-button {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+/* Opcional: ocultar también la “flecha” interna */
+.my-scroll-pane .scroll-bar:vertical .increment-arrow,
+.my-scroll-pane .scroll-bar:vertical .decrement-arrow {
+    -fx-opacity: 0;
+    -fx-background-color: transparent;
+}
+
+
+
+/* Ocultar los botones horizontales (flechas izquierda/derecha) */
+.my-scroll-pane .scroll-bar:horizontal .increment-button,
+.my-scroll-pane .scroll-bar:horizontal .decrement-button {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+
+/* Opcional: ocultar la “flecha” interna horizontal */
+.my-scroll-pane .scroll-bar:horizontal .increment-arrow,
+.my-scroll-pane .scroll-bar:horizontal .decrement-arrow {
+    -fx-opacity: 0;
+    -fx-background-color: transparent;
+}
