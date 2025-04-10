@@ -1,7 +1,7 @@
 Proyecto final - ICC-211
 -----------------------------------------------------------------------
 Integrantes:
-* Wady Muñoz - 
+* Wady Muñoz - 10154760
 * Jeverlin Ramos - 10154300
 
 1. Parada
